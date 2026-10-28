@@ -1,0 +1,8 @@
+# Ignorar fotos e registros pessoais (privacidade total)
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.tmp
+fotos/
+exemplos/

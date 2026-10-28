@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Comparador de Evolução Física</title>
+  <style>
+    :root {
+      --bg-main: #0f1115;
+      --bg-panel: #181b22;
+      --bg-card: #212631;
+      --border: #2d3340;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --grid-blue: rgba(59, 130, 246, 0.4);
+      --grid-red: rgba(239, 68, 68, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Cabeçalho */
+    header {
+      background-color: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0.65rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+    }
+
+    .title-wrap h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background 0.2s;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background-color: #2b3240;
+    }
+
+    .btn-active {
+      background-color: #2563eb !important;
+      color: #fff !important;
+      border-color: #3b82f6 !important;
+    }
+
+    /* Barra de Seleção de Layout (2, 3 ou 4 Fotos) */
+    .toolbar {
+      background-color: #14171e;
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .layout-selector {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .layout-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-right: 0.25rem;
+    }
+
+    .pill-btn {
+      background-color: var(--bg-card);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.775rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pill-btn.active {
+      background-color: rgba(37, 99, 235, 0.25);
+      color: #60a5fa;
+      border-color: var(--accent);
+    }
+
+    /* Container Principal */
+    main {
+      flex: 1;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Estado Vazio */
+    .empty-state {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      background-color: rgba(24, 27, 34, 0.5);
+      margin: auto;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .empty-state h2 {
+      font-size: 1.2rem;
+    }
+
+    .empty-state p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    /* Grade de Comparação */
+    .compare-container {
+      display: grid;
+      gap: 0.75rem;
+      width: 100%;
+      height: 100%;
+      flex: 1;
+    }
+
+    /* Layouts por quantidade de fotos */
+    .layout-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .layout-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .layout-4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    /* Card de cada Foto */
+    .photo-slot {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .slot-header {
+      padding: 0.4rem 0.6rem;
+      background-color: #12151b;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+    }
+
+    .slot-select {
+      background-color: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      outline: none;
+      max-width: 140px;
+      text-overflow: ellipsis;
+    }
+
+    .photo-stage {
+      position: relative;
+      flex: 1;
+      background-color: #050608;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .image-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      transform-origin: center center;
+    }
+
+    .image-wrapper:active {
+      cursor: grabbing;
+    }
+
+    .image-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    /* Grade Guia de Alinhamento */
+    .grid-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    body.show-grid .grid-overlay {
+      display: block;
+    }
+
+    .line-h {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: var(--grid-blue);
+      box-shadow: 0 0 2px rgba(0,0,0,0.8);
+    }
+
+    .line-v {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: var(--grid-blue);
+      box-shadow: 0 0 2px rgba(0,0,0,0.8);
+    }
+
+    .line-v.center {
+      background-color: var(--grid-red);
+    }
+
+    /* Controles de Zoom e Reset */
+    .slot-footer {
+      padding: 0.35rem 0.6rem;
+      background-color: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.725rem;
+    }
+
+    .zoom-box {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1;
+    }
+
+    .zoom-box input[type="range"] {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .reset-btn {
+      background-color: var(--bg-card);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+
+    .reset-btn:hover {
+      color: var(--text);
+    }
+
+    .slot-empty-msg {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-style: italic;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* ========================================================
+       COMPORTAMENTO NO CELULAR (VERTICAL vs HORIZONTAL)
+       ======================================================== */
+    @media (max-width: 768px) {
+      header {
+        padding: 0.5rem 0.75rem;
+      }
+      .toolbar {
+        padding: 0.4rem 0.75rem;
+      }
+      
+      /* Celular na Vertical (Retrato): Uma foto abaixo da outra (ou 1 por tela) */
+      @media (orientation: portrait) {
+        .compare-container {
+          grid-template-columns: 1fr !important;
+        }
+        .photo-stage {
+          min-height: 380px;
+        }
+      }
+
+      /* Celular na Horizontal (Paisagem): Fotos Lado a Lado perfeitamente! */
+      @media (orientation: landscape) {
+        .layout-2 {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        .layout-3 {
+          grid-template-columns: repeat(3, 1fr) !important;
+        }
+        .layout-4 {
+          grid-template-columns: repeat(4, 1fr) !important;
+        }
+        .photo-stage {
+          min-height: 240px;
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-wrap">
+      <h1>Evolução Física</h1>
+    </div>
+    <div class="top-actions">
+      <button class="btn btn-secondary" id="btnToggleGrid" onclick="toggleGrid()">
+        📐 Grade: OFF
+      </button>
+
+      <!-- Botão para Celular e Fotos Avulsas -->
+      <label class="btn" for="filePicker">
+        📸 Escolher Fotos
+      </label>
+      <input type="file" id="filePicker" accept="image/*" multiple>
+
+      <!-- Botão para Pasta Completa no PC -->
+      <label class="btn btn-secondary" for="folderPicker">
+        📁 Pasta (PC)
+      </label>
+      <input type="file" id="folderPicker" webkitdirectory directory multiple>
+
+      <button class="btn btn-secondary" onclick="loadDemoTimeline()" title="Carregar Exemplo">
+        ⚡ Demo
+      </button>
+    </div>
+  </header>
+
+  <!-- Barra de Configuração de Visualização: 2, 3 ou 4 Fotos -->
+  <div class="toolbar" id="toolbar" style="display: none;">
+    <div class="layout-selector">
+      <span class="layout-label">Exibir:</span>
+      <button class="pill-btn active" id="btnLayout2" onclick="setLayout(2)">2 Fotos</button>
+      <button class="pill-btn" id="btnLayout3" onclick="setLayout(3)">3 Fotos</button>
+      <button class="pill-btn" id="btnLayout4" onclick="setLayout(4)">4 Fotos</button>
+    </div>
+
+    <div style="font-size: 0.75rem; color: var(--text-muted);" id="photoCountLabel">
+      0 fotos carregadas
+    </div>
+  </div>
+
+  <main>
+    <!-- Tela Vazia Inicial -->
+    <div class="empty-state" id="emptyState">
+      <h2>Comparador Simples de Fotos</h2>
+      <p>
+        Escolha as fotos que você quer comparar (pode ser 2, 3 ou 4 fotos da mesma pose ou de poses diferentes).
+      </p>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+        <label class="btn" for="filePicker">
+          📸 Escolher Fotos da Galeria
+        </label>
+        <label class="btn btn-secondary" for="folderPicker">
+          📁 Selecionar Pasta (PC)
+        </label>
+        <button class="btn btn-secondary" onclick="loadDemoTimeline()">
+          ⚡ Ver Exemplo (3 Fotos Costas)
+        </button>
+      </div>
+    </div>
+
+    <!-- Área de Exibição das Fotos -->
+    <div class="compare-container layout-2" id="compareContainer" style="display: none;">
+      <!-- Slot 1 -->
+      <div class="photo-slot" id="slot-1">
+        <div class="slot-header">
+          <strong>Foto 1</strong>
+          <select class="slot-select" id="select-1" onchange="changeSlotPhoto(1, this.value)"></select>
+        </div>
+        <div class="photo-stage" id="stage-1"></div>
+        <div class="slot-footer" id="footer-1"></div>
+      </div>
+
+      <!-- Slot 2 -->
+      <div class="photo-slot" id="slot-2">
+        <div class="slot-header">
+          <strong>Foto 2</strong>
+          <select class="slot-select" id="select-2" onchange="changeSlotPhoto(2, this.value)"></select>
+        </div>
+        <div class="photo-stage" id="stage-2"></div>
+        <div class="slot-footer" id="footer-2"></div>
+      </div>
+
+      <!-- Slot 3 -->
+      <div class="photo-slot" id="slot-3" style="display: none;">
+        <div class="slot-header">
+          <strong>Foto 3</strong>
+          <select class="slot-select" id="select-3" onchange="changeSlotPhoto(3, this.value)"></select>
+        </div>
+        <div class="photo-stage" id="stage-3"></div>
+        <div class="slot-footer" id="footer-3"></div>
+      </div>
+
+      <!-- Slot 4 -->
+      <div class="photo-slot" id="slot-4" style="display: none;">
+        <div class="slot-header">
+          <strong>Foto 4</strong>
+          <select class="slot-select" id="select-4" onchange="changeSlotPhoto(4, this.value)"></select>
+        </div>
+        <div class="photo-stage" id="stage-4"></div>
+        <div class="slot-footer" id="footer-4"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Lista de fotos carregadas: [ { id: 0, name: 'costas_sem1.jpg', url: '...' }, ... ]
+    let photosList = [];
+    let currentLayout = 2; // 2, 3 ou 4
+    let isGridOn = false;
+
+    // Estado individual de Zoom e Pan: { slotIndex: { scale: 1, x: 0, y: 0 } }
+    let slotTransform = {
+      1: { scale: 1, x: 0, y: 0 },
+      2: { scale: 1, x: 0, y: 0 },
+      3: { scale: 1, x: 0, y: 0 },
+      4: { scale: 1, x: 0, y: 0 }
+    };
+
+    // Foto associada a cada slot: { slotIndex: photoIndex }
+    let slotSelectedPhoto = { 1: 0, 2: 1, 3: 2, 4: 3 };
+
+    document.getElementById('filePicker').addEventListener('change', handleFiles);
+    document.getElementById('folderPicker').addEventListener('change', handleFiles);
+
+    function toggleGrid() {
+      isGridOn = !isGridOn;
+      document.body.classList.toggle('show-grid', isGridOn);
+      const btn = document.getElementById('btnToggleGrid');
+      btn.classList.toggle('btn-active', isGridOn);
+      btn.textContent = isGridOn ? '📐 Grade: ON' : '📐 Grade: OFF';
+    }
+
+    function setLayout(num) {
+      currentLayout = num;
+      const c = document.getElementById('compareContainer');
+      c.className = `compare-container layout-${num}`;
+
+      document.getElementById('btnLayout2').classList.toggle('active', num === 2);
+      document.getElementById('btnLayout3').classList.toggle('active', num === 3);
+      document.getElementById('btnLayout4').classList.toggle('active', num === 4);
+
+      document.getElementById('slot-1').style.display = 'flex';
+      document.getElementById('slot-2').style.display = 'flex';
+      document.getElementById('slot-3').style.display = (num >= 3) ? 'flex' : 'none';
+      document.getElementById('slot-4').style.display = (num >= 4) ? 'flex' : 'none';
+
+      renderAllSlots();
+    }
+
+    function handleFiles(event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      photosList = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+
+        photosList.push({
+          id: i,
+          name: file.name,
+          url: URL.createObjectURL(file)
+        });
+      }
+
+      if (photosList.length === 0) {
+        alert('Nenhuma imagem válida selecionada.');
+        return;
+      }
+
+      // Se o usuário selecionou 3 fotos, ajusta o layout para 3 fotos automaticamente!
+      if (photosList.length === 3) setLayout(3);
+      else if (photosList.length >= 4 && currentLayout < 3) setLayout(photosList.length === 4 ? 4 : 2);
+
+      // Atribui fotos iniciais aos slots
+      slotSelectedPhoto[1] = 0;
+      slotSelectedPhoto[2] = photosList.length > 1 ? 1 : 0;
+      slotSelectedPhoto[3] = photosList.length > 2 ? 2 : 0;
+      slotSelectedPhoto[4] = photosList.length > 3 ? 3 : 0;
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('toolbar').style.display = 'flex';
+      document.getElementById('compareContainer').style.display = 'grid';
+      document.getElementById('photoCountLabel').textContent = `${photosList.length} fotos disponíveis`;
+
+      updateSelectDropdowns();
+      renderAllSlots();
+    }
+
+    function updateSelectDropdowns() {
+      for (let slot = 1; slot <= 4; slot++) {
+        const sel = document.getElementById(`select-${slot}`);
+        sel.innerHTML = '';
+        photosList.forEach((photo, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.textContent = photo.name;
+          sel.appendChild(opt);
+        });
+        sel.value = slotSelectedPhoto[slot];
+      }
+    }
+
+    function changeSlotPhoto(slot, photoIdx) {
+      slotSelectedPhoto[slot] = parseInt(photoIdx);
+      renderSlot(slot);
+    }
+
+    function getGridOverlayHTML() {
+      return `
+        <div class="grid-overlay">
+          <!-- Linhas Horizontais de Referência: Ombros, Cintura, Quadril -->
+          <div class="line-h" style="top: 20%;"></div>
+          <div class="line-h" style="top: 35%;"></div>
+          <div class="line-h" style="top: 50%;"></div>
+          <div class="line-h" style="top: 65%;"></div>
+          <div class="line-h" style="top: 80%;"></div>
+          <!-- Linha Vertical Central -->
+          <div class="line-v center" style="left: 50%;"></div>
+          <div class="line-v" style="left: 30%;"></div>
+          <div class="line-v" style="left: 70%;"></div>
+        </div>
+      `;
+    }
+
+    function renderAllSlots() {
+      for (let slot = 1; slot <= currentLayout; slot++) {
+        renderSlot(slot);
+      }
+    }
+
+    function renderSlot(slot) {
+      const stage = document.getElementById(`stage-${slot}`);
+      const footer = document.getElementById(`footer-${slot}`);
+      const photoIdx = slotSelectedPhoto[slot];
+      const photo = photosList[photoIdx];
+
+      if (!photo) {
+        stage.innerHTML = `<span class="slot-empty-msg">Nenhuma foto selecionada</span>`;
+        footer.innerHTML = '';
+        return;
+      }
+
+      stage.innerHTML = `
+        <div class="image-wrapper" id="wrap-slot-${slot}">
+          <img src="${photo.url}" alt="${photo.name}">
+        </div>
+        ${getGridOverlayHTML()}
+      `;
+
+      footer.innerHTML = `
+        <div class="zoom-box">
+          <span style="color:var(--text-muted);">Zoom</span>
+          <input type="range" min="0.8" max="2.2" step="0.02" value="${slotTransform[slot].scale}" id="slider-${slot}" oninput="updateSlotScale(${slot}, this.value)">
+        </div>
+        <button class="reset-btn" onclick="resetSlot(${slot})" title="Resetar Enquadramento">↺</button>
+      `;
+
+      attachPanAndZoom(stage, slot);
+      applySlotTransform(slot);
+    }
+
+    function updateSlotScale(slot, val) {
+      slotTransform[slot].scale = parseFloat(val);
+      applySlotTransform(slot);
+    }
+
+    function resetSlot(slot) {
+      slotTransform[slot] = { scale: 1, x: 0, y: 0 };
+      const slider = document.getElementById(`slider-${slot}`);
+      if (slider) slider.value = 1;
+      applySlotTransform(slot);
+    }
+
+    function applySlotTransform(slot) {
+      const wrap = document.getElementById(`wrap-slot-${slot}`);
+      if (!wrap) return;
+      const { scale, x, y } = slotTransform[slot];
+      wrap.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    }
+
+    function attachPanAndZoom(stage, slot) {
+      let isDragging = false;
+      let startX, startY;
+
+      function start(e) {
+        isDragging = true;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startX = clientX - slotTransform[slot].x;
+        startY = clientY - slotTransform[slot].y;
+      }
+
+      function move(e) {
+        if (!isDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        slotTransform[slot].x = clientX - startX;
+        slotTransform[slot].y = clientY - startY;
+        applySlotTransform(slot);
+      }
+
+      function end() {
+        isDragging = false;
+      }
+
+      stage.addEventListener('mousedown', start);
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', end);
+
+      stage.addEventListener('touchstart', start, { passive: true });
+      window.addEventListener('touchmove', move, { passive: true });
+      window.addEventListener('touchend', end);
+
+      // Zoom na rodinha do mouse
+      stage.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.05 : -0.05;
+        let newScale = slotTransform[slot].scale + delta;
+        newScale = Math.min(Math.max(newScale, 0.8), 2.2);
+        slotTransform[slot].scale = newScale;
+        const slider = document.getElementById(`slider-${slot}`);
+        if (slider) slider.value = newScale;
+        applySlotTransform(slot);
+      }, { passive: false });
+    }
+
+    /* Função Demo: Exemplo direto de 3 fotos da mesma pose (Costas - Semana 1, 3 e 6) */
+    function loadDemoTimeline() {
+      function makeDemoBackImage(title, week, scaleFactor) {
+        const c = document.createElement('canvas');
+        c.width = 400;
+        c.height = 540;
+        const ctx = c.getContext('2d');
+
+        ctx.fillStyle = '#14171f';
+        ctx.fillRect(0, 0, 400, 540);
+
+        ctx.strokeStyle = '#232936';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < 400; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 540); ctx.stroke();
+        }
+        for (let y = 0; y < 540; y += 40) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(400, y); ctx.stroke();
+        }
+
+        // Silhueta das Costas (Expansão de Dorsal)
+        ctx.fillStyle = '#3b82f6';
+        // Cabeça
+        ctx.beginPath();
+        ctx.arc(200, 100, 40, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Trapézio e Costas
+        ctx.beginPath();
+        ctx.moveTo(200, 120);
+        ctx.lineTo(200 - (70 * scaleFactor), 180); // Ombro E
+        ctx.lineTo(200 - (65 * scaleFactor), 300); // Dorsal E
+        ctx.lineTo(165, 340); // Cintura E
+        ctx.lineTo(235, 340); // Cintura D
+        ctx.lineTo(200 + (65 * scaleFactor), 300); // Dorsal D
+        ctx.lineTo(200 + (70 * scaleFactor), 180); // Ombro D
+        ctx.closePath();
+        ctx.fill();
+
+        // Braços
+        ctx.beginPath();
+        ctx.roundRect(200 - (75 * scaleFactor) - 30, 185, 30, 160, 15);
+        ctx.roundRect(200 + (75 * scaleFactor), 185, 30, 160, 15);
+        ctx.fill();
+
+        // Pernas
+        ctx.beginPath();
+        ctx.roundRect(155, 350, 40, 160, 15);
+        ctx.roundRect(205, 350, 40, 160, 15);
+        ctx.fill();
+
+        // Rótulos
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(title, 200, 270);
+
+        ctx.font = '14px sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(week, 200, 295);
+
+        return c.toDataURL('image/jpeg');
+      }
+
+      photosList = [
+        { id: 0, name: 'Costas - Sem 1', url: makeDemoBackImage('COSTAS', 'Semana 1', 1.0) },
+        { id: 1, name: 'Costas - Sem 3', url: makeDemoBackImage('COSTAS', 'Semana 3', 1.07) },
+        { id: 2, name: 'Costas - Sem 6', url: makeDemoBackImage('COSTAS', 'Semana 6', 1.15) }
+      ];
+
+      slotSelectedPhoto = { 1: 0, 2: 1, 3: 2, 4: 0 };
+      setLayout(3); // Mostra 3 fotos lado a lado!
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('toolbar').style.display = 'flex';
+      document.getElementById('compareContainer').style.display = 'grid';
+      document.getElementById('photoCountLabel').textContent = 'Exemplo: 3 fotos de Costas';
+
+      updateSelectDropdowns();
+      renderAllSlots();
+    }
+  </script>
+</body>
+</html>
